@@ -1,0 +1,9 @@
+services:
+  ocr-service:
+    build: ./ocr-service
+    container_name: ocr_service
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./ocr-service:/app
+      
