@@ -119,3 +119,101 @@ def extraire_infos_cin(text):
             break
 
     return infos
+
+# =========================
+# 4. Extraction Permis
+# =========================
+
+def extraire_infos_permis(text):
+    infos = {
+        "type_document": "permis",
+        "nom": None,
+        "prenom": None,
+        "date_naissance": None,
+        "lieu_naissance": None,
+        "numero_permis": None,
+        "date_delivrance": None,
+        "date_expiration": None,
+        "categories": [],
+        "text_brut": text
+    }
+
+    lignes = nettoyer_lignes(text)
+    text_upper = normaliser_text(text)
+
+    # Nom et Prénom
+    # Permis format:
+    # 1. ELAMRANI
+    # 2. ASMAE
+
+    for ligne in lignes:
+        ligne_clean = ligne.strip()
+
+        match_nom = re.match(r"^1\.\s*([A-ZÀ-ÿ\s]+)$", ligne_clean, re.IGNORECASE)
+        if match_nom:
+            infos["nom"] = match_nom.group(1).strip().upper()
+
+        match_prenom = re.match(r"^2\.\s*([A-ZÀ-ÿ\s]+)$", ligne_clean, re.IGNORECASE)
+        if match_prenom:
+            infos["prenom"] = match_prenom.group(1).strip().upper()
+
+    # Dates
+    dates = re.findall(r"\b\d{2}/\d{2}/\d{4}\b", text)
+
+    if len(dates) >= 1:
+        infos["date_naissance"] = dates[0]
+
+    if len(dates) >= 2:
+        infos["date_delivrance"] = dates[1]
+
+    if len(dates) >= 3:
+        infos["date_expiration"] = dates[2]
+
+    # Lieu naissance
+    # Exemple: 3. 15/05/1998 RABAT
+    match_lieu = re.search(r"3\.\s*\d{2}/\d{2}/\d{4}\s+([A-ZÀ-ÿ\s]+)", text, re.IGNORECASE)
+    if match_lieu:
+        infos["lieu_naissance"] = match_lieu.group(1).strip().upper()
+
+    # Numéro permis
+    match_numero_label = re.search(
+        r"N[°º]?\s*de\s*permis\s*:\s*([A-Z]{1,3}[0-9]{5,10})",
+        text_upper,
+        re.IGNORECASE
+    )
+
+    if match_numero_label:
+        infos["numero_permis"] = match_numero_label.group(1)
+    else:
+        match_numero_5 = re.search(r"5\.\s*([A-Z]{1,3}[0-9]{5,10})", text_upper)
+        if match_numero_5:
+            infos["numero_permis"] = match_numero_5.group(1)
+        else:
+            permis_match = re.search(r"\b[A-Z]{1,3}[0-9]{5,10}\b", text_upper)
+            if permis_match:
+                infos["numero_permis"] = permis_match.group()
+
+    # Catégories
+    categories_trouvees = []
+
+    if re.search(r"\bAM\b", text_upper):
+        categories_trouvees.append("AM")
+
+    if re.search(r"\bA1\b|\bAL\b", text_upper):
+        categories_trouvees.append("A1")
+
+    if re.search(r"\bA\b", text_upper):
+        categories_trouvees.append("A")
+
+    if re.search(r"\bB\b|\bBO\b|\bB0\b", text_upper):
+        categories_trouvees.append("B")
+
+    if re.search(r"\bC\b", text_upper):
+        categories_trouvees.append("C")
+
+    if re.search(r"\bD\b", text_upper):
+        categories_trouvees.append("D")
+
+    infos["categories"] = categories_trouvees
+
+    return infos
