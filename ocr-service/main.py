@@ -59,3 +59,63 @@ def detecter_type_document(text):
     return "inconnu"
 
 
+# =========================
+# 3. Extraction CIN
+# =========================
+
+def extraire_infos_cin(text):
+    infos = {
+        "type_document": "cin",
+        "nom": None,
+        "prenom": None,
+        "date_naissance": None,
+        "lieu_naissance": None,
+        "cin": None,
+        "date_expiration": None,
+        "text_brut": text
+    }
+
+    lignes = nettoyer_lignes(text)
+
+    # CIN بحال AE123456
+    cin_match = re.search(r"\b[A-Z]{1,2}[0-9]{5,8}\b", text)
+    if cin_match:
+        infos["cin"] = cin_match.group()
+
+    # التواريخ بحال 15/05/1998
+    dates = re.findall(r"\b\d{2}/\d{2}/\d{4}\b", text)
+
+    if len(dates) >= 1:
+        infos["date_naissance"] = dates[0]
+
+    if len(dates) >= 2:
+        infos["date_expiration"] = dates[1]
+
+    # Nom و Prénom
+    for i, ligne in enumerate(lignes):
+        ligne_clean = ligne.lower().replace("é", "e").replace("è", "e").strip()
+
+        if ligne_clean.startswith("prenom"):
+            if i + 1 < len(lignes):
+                infos["prenom"] = lignes[i + 1]
+
+        elif ligne_clean.startswith("nom"):
+            if i + 1 < len(lignes):
+                infos["nom"] = lignes[i + 1]
+
+    # المدينة
+    villes = [
+        "RABAT", "CASABLANCA", "FES", "FEZ", "MEKNES",
+        "MARRAKECH", "TANGER", "AGADIR", "OUJDA",
+        "TETOUAN", "KENITRA", "SALE", "SAFI",
+        "EL JADIDA", "BENI MELLAL", "NADOR", "SETTAT"
+    ]
+
+    text_upper = normaliser_text(text)
+
+    for ville in villes:
+        if ville in text_upper:
+            infos["lieu_naissance"] = "FES" if ville == "FEZ" else ville
+            break
+
+    return infos
