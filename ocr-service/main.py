@@ -217,3 +217,30 @@ def extraire_infos_permis(text):
     infos["categories"] = categories_trouvees
 
     return infos
+# =========================
+# 5. Routes FastAPI
+# =========================
+
+@app.post("/scan")
+async def scan_document(file: UploadFile = File(...)):
+    contents = await file.read()
+    image = Image.open(io.BytesIO(contents))
+
+    # OCR: image -> text brut
+    text = pytesseract.image_to_string(image, lang="fra")
+
+    # Détection automatique
+    type_document = detecter_type_document(text)
+
+    if type_document == "cin":
+        return extraire_infos_cin(text)
+
+    elif type_document == "permis":
+        return extraire_infos_permis(text)
+
+    else:
+        return {
+            "type_document": "inconnu",
+            "message": "Type de document non reconnu",
+            "text_brut": text
+        }
