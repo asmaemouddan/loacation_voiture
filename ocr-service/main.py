@@ -42,3 +42,20 @@ def normaliser_text(text):
     نخليو النص uppercase ونسهلو البحث
     """
     return text.upper().replace("É", "E").replace("È", "E").replace("À", "A")
+
+# =========================
+# 2. Détection type document
+# =========================
+
+def detecter_type_document(text):
+    text_upper = normaliser_text(text)
+
+    if "CARTE NATIONALE" in text_upper or "IDENTITE" in text_upper or "N° CIN" in text_upper or "CIN" in text_upper:
+        return "cin"
+
+    if "PERMIS" in text_upper or "CONDUIRE" in text_upper or "DRIVING" in text_upper or "LICENCE" in text_upper:
+        return "permis"
+
+    return "inconnu"
+
+
