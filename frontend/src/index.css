@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Inter", system-ui, sans-serif;
+  background: #000000;
+  color: white;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+html,
+#root {
+  background: #000000;
+}
+.bg\ conic-gradient {
+  background: conic-gradient(#22c55e 0 68%, #facc15 68% 89%, #ef4444 89% 100%);
+}
+.bg-conic {
+  background: conic-gradient(
+    #22c55e 0 68%,
+    #facc15 68% 89%,
+    #ef4444 89% 100%
+  );
+}
