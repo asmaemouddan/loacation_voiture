@@ -1,4 +1,41 @@
 services:
+  backend:
+    build: ./backend
+    container_name: laravel_backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      - mysql
+      - ocr-service
+    environment:
+      OCR_SERVICE_URL: http://ocr-service:8001
+
+  mysql:
+    image: mysql:8.0
+    container_name: location_mysql
+    restart: always
+    ports:
+      - "3308:3306"
+    environment:
+      MYSQL_DATABASE: location_voiture
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: location_phpmyadmin
+    restart: always
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+    depends_on:
+      - mysql
+
   ocr-service:
     build: ./ocr-service
     container_name: ocr_service
@@ -6,4 +43,6 @@ services:
       - "8001:8001"
     volumes:
       - ./ocr-service:/app
-      
+
+volumes:
+  mysql_data:

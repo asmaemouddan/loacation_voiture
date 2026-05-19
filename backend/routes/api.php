@@ -9,6 +9,7 @@ use App\Http\Controllers\VehiculeController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\AgenceController;
 use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\OcrController;
 use App\Http\Controllers\OcrResultController;
 
 /*
@@ -83,6 +84,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     | VEHICULES MANAGEMENT
     |--------------------------------------------------------------------------
     */
+    Route::post('/ocr/scan', [OcrController::class, 'scan']);
 
     Route::post('/vehicules', [VehiculeController::class, 'store']);
 
