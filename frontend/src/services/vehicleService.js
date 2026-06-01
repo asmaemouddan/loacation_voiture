@@ -1,6 +1,11 @@
 import api from "../api/axios";
 
-export async function getVehicles() {
-  const response = await api.get("/vehicles");
+export const getVehicles = async () => {
+  const response = await api.get("/vehicules");
   return response.data;
-}
+};
+
+export const getVehicleById = async (id) => {
+  const response = await api.get(`/vehicules/${id}`);
+  return response.data;
+};
