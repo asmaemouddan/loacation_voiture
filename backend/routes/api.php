@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Models\User;
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\VehiculeController;
@@ -18,6 +19,19 @@ use App\Http\Controllers\OcrResultController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+
+/*
+|--------------------------------------------------------------------------
+| PUBLIC CLIENTS FOR DEMO
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/clients', function () {
+    return User::where('role', 'user')
+        ->orWhere('role', 'client')
+        ->latest()
+        ->paginate(10);
+});
 
 /*
 |--------------------------------------------------------------------------
