@@ -14,3 +14,13 @@ export const createReservation = async (reservationData) => {
   const response = await api.post("/reservations", reservationData);
   return response.data;
 };
+
+export const acceptReservation = async (id) => {
+  const response = await api.put(`/reservations/${id}/accepter`);
+  return response.data;
+};
+
+export const refuseReservation = async (id) => {
+  const response = await api.put(`/reservations/${id}/refuser`);
+  return response.data;
+};
