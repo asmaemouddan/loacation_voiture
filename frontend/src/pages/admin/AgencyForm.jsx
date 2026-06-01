@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Building2,
   MapPin,
@@ -8,10 +9,53 @@ import {
   ArrowLeft,
 } from "lucide-react";
 
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import AdminLayout from "../../components/admin/AdminLayout";
+import api from "../../api/axios";
 
 function AgencyForm() {
+  const navigate = useNavigate();
+
+  const [formData, setFormData] = useState({
+    nom: "",
+    ville: "",
+    adresse: "",
+    telephone: "",
+    email: "",
+    responsable: "",
+  });
+
+  const [saving, setSaving] = useState(false);
+
+  const handleChange = (field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      setSaving(true);
+
+      await api.post("/agences", {
+        nom: formData.nom,
+        ville: formData.ville,
+        adresse: formData.adresse,
+        telephone: formData.telephone,
+      });
+
+      navigate("/admin/agencies");
+    } catch (error) {
+      console.error("Erreur création agence:", error.response?.data || error);
+      alert("Impossible d'enregistrer l'agence.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="mt-8">
@@ -34,8 +78,10 @@ function AgencyForm() {
         </div>
 
         <div className="mt-10 grid gap-8 xl:grid-cols-[1fr_0.75fr]">
-          {/* FORM */}
-          <form className="rounded-[2.5rem] border border-white/10 bg-white/[0.04] p-8 backdrop-blur-2xl">
+          <form
+            onSubmit={handleSubmit}
+            className="rounded-[2.5rem] border border-white/10 bg-white/[0.04] p-8 backdrop-blur-2xl"
+          >
             <p className="mb-8 text-xs font-black uppercase tracking-[0.35em] text-[#22C55E]">
               Informations agence
             </p>
@@ -45,30 +91,40 @@ function AgencyForm() {
                 icon={<Building2 size={18} />}
                 label="Nom agence"
                 placeholder="Rentivo Fès Centre"
+                value={formData.nom}
+                onChange={(value) => handleChange("nom", value)}
               />
 
               <Input
                 icon={<MapPin size={18} />}
                 label="Ville"
                 placeholder="Fès"
+                value={formData.ville}
+                onChange={(value) => handleChange("ville", value)}
               />
 
               <Input
                 icon={<MapPin size={18} />}
                 label="Adresse"
                 placeholder="Avenue Hassan II"
+                value={formData.adresse}
+                onChange={(value) => handleChange("adresse", value)}
               />
 
               <Input
                 icon={<Phone size={18} />}
                 label="Téléphone"
                 placeholder="+212 6 12 34 56 78"
+                value={formData.telephone}
+                onChange={(value) => handleChange("telephone", value)}
               />
 
               <Input
                 icon={<Mail size={18} />}
                 label="Email"
                 placeholder="fes@rentivo.com"
+                value={formData.email}
+                onChange={(value) => handleChange("email", value)}
               />
 
               <div>
@@ -77,25 +133,28 @@ function AgencyForm() {
                 </label>
 
                 <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/30 px-5 py-4">
-                  <UserRound
-                    size={18}
-                    className="text-[#22C55E]"
-                  />
+                  <UserRound size={18} className="text-[#22C55E]" />
 
-                  <select className="w-full bg-transparent text-sm text-white outline-none">
-                    <option className="bg-black">
+                  <select
+                    value={formData.responsable}
+                    onChange={(e) =>
+                      handleChange("responsable", e.target.value)
+                    }
+                    className="w-full bg-transparent text-sm text-white outline-none"
+                  >
+                    <option className="bg-black" value="">
                       Choisir responsable
                     </option>
 
-                    <option className="bg-black">
+                    <option className="bg-black" value="Yassine Alami">
                       Yassine Alami
                     </option>
 
-                    <option className="bg-black">
+                    <option className="bg-black" value="Sara Bennani">
                       Sara Bennani
                     </option>
 
-                    <option className="bg-black">
+                    <option className="bg-black" value="Laila Amrani">
                       Laila Amrani
                     </option>
                   </select>
@@ -104,15 +163,15 @@ function AgencyForm() {
             </div>
 
             <button
-              type="button"
-              className="mt-8 flex w-full items-center justify-center gap-3 rounded-2xl bg-[#22C55E] py-4 font-black text-[#081C15] shadow-[0_0_30px_rgba(34,197,94,0.3)] transition hover:bg-[#D8F3DC]"
+              type="submit"
+              disabled={saving}
+              className="mt-8 flex w-full items-center justify-center gap-3 rounded-2xl bg-[#22C55E] py-4 font-black text-[#081C15] shadow-[0_0_30px_rgba(34,197,94,0.3)] transition hover:bg-[#D8F3DC] disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Save size={20} />
-              Enregistrer agence
+              {saving ? "Enregistrement..." : "Enregistrer agence"}
             </button>
           </form>
 
-          {/* SIDE CARD */}
           <div className="rounded-[2.5rem] border border-white/10 bg-white/[0.04] p-8 backdrop-blur-2xl">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#22C55E]/10 text-[#22C55E]">
               <Building2 size={28} />
@@ -162,7 +221,7 @@ function AgencyForm() {
   );
 }
 
-function Input({ icon, label, placeholder }) {
+function Input({ icon, label, placeholder, value, onChange }) {
   return (
     <div>
       <label className="mb-2 block text-sm font-bold text-white/50">
@@ -176,6 +235,8 @@ function Input({ icon, label, placeholder }) {
 
         <input
           type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/30"
         />
