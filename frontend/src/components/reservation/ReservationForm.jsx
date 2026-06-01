@@ -1,15 +1,22 @@
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { CalendarDays, CarFront, Building2 } from "lucide-react";
 import ReservationSummary from "./ReservationSummary";
 
-function ReservationForm({
-  cars,
-  selectedCar,
-  setSelectedCar,
-}) {
-  const selectedVehicle = cars.find(
-    (car) => String(car.id) === String(selectedCar)
-  );
+function ReservationForm({ cars, selectedCar, setSelectedCar }) {
+  const [agence, setAgence] = useState("");
+  const [dateDebut, setDateDebut] = useState("");
+  const [dateFin, setDateFin] = useState("");
+
+  const selectedVehicle = useMemo(() => {
+    return cars.find((car) => String(car.id) === String(selectedCar));
+  }, [cars, selectedCar]);
+
+  useEffect(() => {
+    if (selectedVehicle) {
+      setAgence(selectedVehicle.agence || `Agence ${selectedVehicle.agence_id || ""}`);
+    }
+  }, [selectedVehicle]);
 
   return (
     <motion.div
@@ -47,15 +54,27 @@ function ReservationForm({
                 onChange={(e) => setSelectedCar(e.target.value)}
                 className="w-full bg-transparent text-sm text-[#081C15] outline-none dark:text-white"
               >
-                {cars.map((car) => (
-                  <option
-                    key={car.id}
-                    value={car.id}
-                    className="bg-white dark:bg-black"
-                  >
-                    {car.name} - {car.price} DH/jour
-                  </option>
-                ))}
+                {cars.map((car) => {
+                  const name =
+                    car.name || `${car.marque || ""} ${car.modele || ""}`.trim();
+                  const price =
+                    car.price ||
+                    car.prix ||
+                    car.prixParJour ||
+                    car.prixJour ||
+                    car.prix_jour ||
+                    0;
+
+                  return (
+                    <option
+                      key={car.id}
+                      value={car.id}
+                      className="bg-white dark:bg-black"
+                    >
+                      {name} - {price} DH/jour
+                    </option>
+                  );
+                })}
               </select>
             </div>
           </div>
@@ -63,29 +82,40 @@ function ReservationForm({
           <Input
             label="Nom agence"
             icon={<Building2 size={18} />}
+            value={agence}
+            onChange={setAgence}
             placeholder="Agence Fès Centre"
           />
 
           <Input
             label="Date début"
             type="date"
-            icon={<CalendarDays />}
+            icon={<CalendarDays size={18} />}
+            value={dateDebut}
+            onChange={setDateDebut}
           />
 
           <Input
             label="Date fin"
             type="date"
-            icon={<CalendarDays />}
+            icon={<CalendarDays size={18} />}
+            value={dateFin}
+            onChange={setDateFin}
           />
         </div>
       </div>
 
-      <ReservationSummary selectedVehicle={selectedVehicle} />
+      <ReservationSummary
+        selectedVehicle={selectedVehicle}
+        agence={agence}
+        dateDebut={dateDebut}
+        dateFin={dateFin}
+      />
     </motion.div>
   );
 }
 
-function Input({ label, icon, value, type = "text", placeholder }) {
+function Input({ label, icon, value, onChange, type = "text", placeholder }) {
   return (
     <div>
       <label className="mb-2 block text-sm font-bold text-[#081C15]/60 dark:text-white/60">
@@ -101,7 +131,8 @@ function Input({ label, icon, value, type = "text", placeholder }) {
 
         <input
           type={type}
-          defaultValue={value}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder || label}
           className="w-full bg-transparent text-sm text-[#081C15] outline-none placeholder:text-[#081C15]/30 dark:text-white dark:placeholder:text-white/30"
         />
