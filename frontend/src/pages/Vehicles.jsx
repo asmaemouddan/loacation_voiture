@@ -20,10 +20,11 @@ function Vehicles() {
     const fetchVehicles = async () => {
       try {
         const data = await getVehicles();
+        const vehicles = Array.isArray(data) ? data : data.data || [];
 
-        const formattedCars = data.map((car) => ({
+        const formattedCars = vehicles.map((car) => ({
+          ...car,
           id: car.id,
-
           marque: car.marque || "",
           modele: car.modele || "",
           immatriculation: car.immatriculation || car.matricule || "",
@@ -31,7 +32,6 @@ function Vehicles() {
           statutDisponibilite:
             car.statutDisponibilite ||
             (car.status === "disponible" ? "Disponible" : "Louée"),
-
           prixJour: car.prixJour || car.prix_jour || car.prix || 0,
           prix_jour: car.prix_jour || car.prixJour || car.prix || 0,
           prix: car.prix || car.prix_jour || car.prixJour || 0,
@@ -42,12 +42,10 @@ function Vehicles() {
           transmission: car.transmission || "Automatique",
           places: car.places || 5,
           agence_id: car.agence_id || null,
-
-       
-          ...car,
         }));
 
         setCars(formattedCars);
+        setError("");
       } catch (err) {
         console.error("Erreur chargement véhicules:", err);
         setError("Impossible de charger les véhicules depuis le serveur.");
