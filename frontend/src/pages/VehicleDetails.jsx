@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import Navbar from "../components/layout/Navbar";
@@ -8,27 +8,83 @@ import VehicleHero from "../components/vehicle/VehicleHero";
 import VehicleSpecs from "../components/vehicle/VehicleSpecs";
 import ReserveCTA from "../components/vehicle/ReserveCTA";
 
-import { cars } from "../data/cars";
+import { getVehicleById } from "../services/vehicleService";
 
 function VehicleDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const car = useMemo(() => {
-    return cars.find((item) => String(item.id) === String(id));
+  const [car, setCar] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+
+  useEffect(() => {
+    const fetchVehicle = async () => {
+      try {
+        const data = await getVehicleById(id);
+
+        const formattedCar = {
+          ...data,
+          id: data.id,
+          marque: data.marque || "",
+          modele: data.modele || "",
+          name: data.name || `${data.marque || ""} ${data.modele || ""}`.trim(),
+          immatriculation: data.immatriculation || data.matricule || "",
+          carburant: data.carburant || "Essence",
+          statutDisponibilite:
+            data.statutDisponibilite ||
+            (data.status === "disponible" ? "Disponible" : "Louée"),
+          prixParJour: data.prixParJour || data.prix_jour || data.prix || 0,
+          prixJour: data.prixJour || data.prix_jour || data.prix || 0,
+          prix_jour: data.prix_jour || data.prixJour || data.prix || 0,
+          image: data.image || "/images/cars/bmw-m4.jpg",
+          categorie: data.categorie || data.category || "Voiture",
+          category: data.category || data.categorie || "Voiture",
+          description: data.description || "",
+          transmission: data.transmission || "Automatique",
+          places: data.places || 5,
+          agence: data.agence || data.agence_nom || "",
+          agence_id: data.agence_id || null,
+        };
+
+        setCar(formattedCar);
+        setNotFound(false);
+      } catch (error) {
+        console.error("Erreur chargement véhicule:", error);
+        setNotFound(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVehicle();
   }, [id]);
 
-  const isConnected = false;
-
   const handleReserve = () => {
-  navigate("/reservation", {
-    state: {
-      selectedCarId: car.id,
-    },
-  });
-};
+    navigate("/reservation", {
+      state: {
+        selectedCarId: car.id,
+      },
+    });
+  };
 
-  if (!car) {
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-black text-white">
+        <Navbar />
+
+        <section className="flex min-h-screen items-center justify-center px-6 text-center">
+          <div>
+            <h1 className="text-4xl font-black text-[#22C55E]">
+              Chargement du véhicule...
+            </h1>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  if (notFound || !car) {
     return (
       <main className="min-h-screen bg-black text-white">
         <Navbar />

@@ -1,31 +1,63 @@
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  CheckCircle2,
-  CreditCard,
-  Clock,
-  Wallet,
-} from "lucide-react";
+import { CheckCircle2, CreditCard, Clock, Wallet } from "lucide-react";
+import { createReservation } from "../../services/reservationService";
 
-function ReservationSummary({ selectedVehicle }) {
+function ReservationSummary({ selectedVehicle, agence, dateDebut, dateFin }) {
   const navigate = useNavigate();
+  const [submitting, setSubmitting] = useState(false);
 
-  const pricePerDay = selectedVehicle?.price || selectedVehicle?.prixParJour || 0;
-  const duration = 3;
+  const vehicleName =
+    selectedVehicle?.name ||
+    `${selectedVehicle?.marque || ""} ${selectedVehicle?.modele || ""}`.trim();
+
+  const pricePerDay =
+    selectedVehicle?.price ||
+    selectedVehicle?.prix ||
+    selectedVehicle?.prixParJour ||
+    selectedVehicle?.prixJour ||
+    selectedVehicle?.prix_jour ||
+    0;
+
+  const duration = useMemo(() => {
+    if (!dateDebut || !dateFin) {
+      return 1;
+    }
+
+    const start = new Date(dateDebut);
+    const end = new Date(dateFin);
+    const diff = end.getTime() - start.getTime();
+    const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+
+    return days > 0 ? days : 1;
+  }, [dateDebut, dateFin]);
+
   const total = pricePerDay * duration;
 
-  const handleConfirm = () => {
-    const reservationData = {
-      vehicle: selectedVehicle?.name,
-      duration,
-      price_per_day: pricePerDay,
-      total,
-      status: "En attente",
-      payment_status: "Non payé",
-    };
+  const handleConfirm = async () => {
+    if (!selectedVehicle || !dateDebut || !dateFin) {
+      return;
+    }
 
-    navigate("/payment", {
-      state: { reservation: reservationData },
-    });
+    try {
+      setSubmitting(true);
+
+      await createReservation({
+        user_id: 1,
+        vehicule_id: selectedVehicle.id,
+        date_debut: dateDebut,
+        date_fin: dateFin,
+        prix_total: total,
+        status: "en_attente",
+      });
+
+      navigate("/my-reservations");
+    } catch (error) {
+      console.error("Erreur création réservation:", error);
+      alert("Impossible de créer la réservation.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -39,9 +71,10 @@ function ReservationSummary({ selectedVehicle }) {
       </p>
 
       <div className="mt-5 space-y-3">
-        <Row label="Véhicule" value={selectedVehicle?.name || "—"} />
+        <Row label="Véhicule" value={vehicleName || "—"} />
+        <Row label="Agence" value={agence || "—"} />
         <Row label="Prix / jour" value={`${pricePerDay} DH`} />
-        <Row label="Durée" value={`${duration} jours`} />
+        <Row label="Durée" value={`${duration} jour${duration > 1 ? "s" : ""}`} />
         <Row label="Statut réservation" value="En attente" icon={<Clock />} />
         <Row label="Paiement" value="Non payé" icon={<CreditCard />} />
       </div>
@@ -61,10 +94,11 @@ function ReservationSummary({ selectedVehicle }) {
 
       <button
         onClick={handleConfirm}
-        className="mt-5 flex w-full items-center justify-center gap-3 rounded-2xl bg-[#081C15] py-4 font-black text-white shadow-[0_0_30px_rgba(8,28,21,0.25)] transition hover:bg-[#0f2d23] dark:bg-[#22C55E] dark:text-[#081C15] dark:shadow-[0_0_30px_rgba(34,197,94,0.35)] dark:hover:bg-[#D8F3DC]"
+        disabled={!selectedVehicle || !dateDebut || !dateFin || submitting}
+        className="mt-5 flex w-full items-center justify-center gap-3 rounded-2xl bg-[#081C15] py-4 font-black text-white shadow-[0_0_30px_rgba(8,28,21,0.25)] transition hover:bg-[#0f2d23] disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#22C55E] dark:text-[#081C15] dark:shadow-[0_0_30px_rgba(34,197,94,0.35)] dark:hover:bg-[#D8F3DC]"
       >
         <CheckCircle2 size={20} />
-        Confirmer la réservation
+        {submitting ? "Envoi en cours..." : "Confirmer la réservation"}
       </button>
     </div>
   );

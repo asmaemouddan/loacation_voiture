@@ -1,19 +1,63 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
-import { cars } from "../data/cars";
-
 import ReservationForm from "../components/reservation/ReservationForm";
+import { getVehicles } from "../services/vehicleService";
 
 function Reservation() {
   const location = useLocation();
 
-  const [selectedCar, setSelectedCar] = useState(
-    location.state?.selectedCarId || cars[0]?.id
-  );
+  const [cars, setCars] = useState([]);
+  const [selectedCar, setSelectedCar] = useState(location.state?.selectedCarId || "");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchVehicles = async () => {
+      try {
+        const data = await getVehicles();
+        const vehicles = Array.isArray(data) ? data : data.data || [];
+
+        const formattedCars = vehicles.map((car) => ({
+          ...car,
+          id: car.id,
+          marque: car.marque || "",
+          modele: car.modele || "",
+          name: car.name || `${car.marque || ""} ${car.modele || ""}`.trim(),
+          immatriculation: car.immatriculation || car.matricule || "",
+          carburant: car.carburant || "Essence",
+          statutDisponibilite:
+            car.statutDisponibilite ||
+            (car.status === "disponible" ? "Disponible" : "Louée"),
+          prixParJour: car.prixParJour || car.prix_jour || car.prix || 0,
+          prixJour: car.prixJour || car.prix_jour || car.prix || 0,
+          prix_jour: car.prix_jour || car.prixJour || car.prix || 0,
+          image: car.image || "/images/cars/bmw-m4.jpg",
+          categorie: car.categorie || car.category || "Voiture",
+          category: car.category || car.categorie || "Voiture",
+          description: car.description || "",
+          transmission: car.transmission || "Automatique",
+          places: car.places || 5,
+          agence: car.agence || car.agence_nom || "",
+          agence_id: car.agence_id || null,
+        }));
+
+        setCars(formattedCars);
+
+        if (!location.state?.selectedCarId && formattedCars.length > 0) {
+          setSelectedCar(formattedCars[0].id);
+        }
+      } catch (error) {
+        console.error("Erreur chargement véhicules:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVehicles();
+  }, [location.state?.selectedCarId]);
 
   return (
     <main className="min-h-screen bg-white text-[#081C15] transition-colors duration-500 dark:bg-[#020403] dark:text-white">
@@ -34,23 +78,29 @@ function Reservation() {
               Réservation
             </p>
 
-            <h1 className="max-w-4xl text-5xl  font-black tracking-tight md:text-7xl">
+            <h1 className="max-w-4xl text-5xl font-black tracking-tight md:text-7xl">
               Confirmer votre
-              <span className="block text-[#2E6B4E] text-[#2E6B4E]">
+              <span className="block text-[#2E6B4E]">
                 réservation.
               </span>
             </h1>
 
             <p className="mt-5 max-w-2xl text-[#081C15]/55 dark:text-white/50">
-             Configurez votre réservation en quelques étapes :
+              Configurez votre réservation en quelques étapes :
             </p>
           </motion.div>
 
-          <ReservationForm
-            cars={cars}
-            selectedCar={selectedCar}
-            setSelectedCar={setSelectedCar}
-          />
+          {loading ? (
+            <div className="rounded-[2rem] border border-[#2E6B4E]/10 bg-white/70 p-10 text-center text-sm font-bold text-[#2E6B4E] shadow-[0_25px_80px_rgba(8,28,21,0.08)] dark:border-white/10 dark:bg-white/[0.04]">
+              Chargement des véhicules...
+            </div>
+          ) : (
+            <ReservationForm
+              cars={cars}
+              selectedCar={selectedCar}
+              setSelectedCar={setSelectedCar}
+            />
+          )}
         </div>
       </section>
 

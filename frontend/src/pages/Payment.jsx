@@ -7,8 +7,43 @@ import {
 } from "lucide-react";
 
 import { motion } from "framer-motion";
+import { useLocation, useNavigate } from "react-router-dom";
 
 function Payment() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const reservation = location.state?.reservation || {};
+
+  const vehicleName =
+    reservation.vehicle ||
+    reservation.car ||
+    reservation.vehicle_name ||
+    "Véhicule réservé";
+
+  const image = reservation.image || "/images/cars/bmw-m4.jpg";
+
+  const dateDebut =
+    reservation.date_debut ||
+    reservation.dateDebut ||
+    "Date début non définie";
+
+  const dateFin =
+    reservation.date_fin ||
+    reservation.dateFin ||
+    "Date fin non définie";
+
+  const total =
+    reservation.total ||
+    reservation.prix_total ||
+    reservation.price_total ||
+    0;
+
+  const handlePayment = () => {
+    alert("Paiement confirmé avec succès.");
+    navigate("/my-reservations");
+  };
+
   return (
     <main className="min-h-screen bg-[#070b0a] px-6 py-10 text-white lg:px-20">
       <div className="mx-auto max-w-7xl">
@@ -23,9 +58,7 @@ function Payment() {
         </div>
 
         <div className="grid gap-8 xl:grid-cols-[1fr_420px]">
-          {/* LEFT */}
           <div className="space-y-8">
-            {/* PAYMENT METHODS */}
             <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-8 backdrop-blur-2xl">
               <div className="mb-8 flex items-center gap-4">
                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#22C55E]/10 text-[#22C55E]">
@@ -60,6 +93,7 @@ function Payment() {
               </div>
 
               <motion.button
+                onClick={handlePayment}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.97 }}
                 className="mt-8 flex w-full items-center justify-center gap-3 rounded-2xl bg-[#22C55E] py-5 text-lg font-black text-[#081C15] shadow-[0_0_35px_rgba(34,197,94,0.3)]"
@@ -69,7 +103,6 @@ function Payment() {
               </motion.button>
             </div>
 
-            {/* SECURITY */}
             <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-8 backdrop-blur-2xl">
               <div className="flex items-center gap-5">
                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#22C55E]/10 text-[#22C55E]">
@@ -90,21 +123,20 @@ function Payment() {
             </div>
           </div>
 
-          {/* RIGHT */}
           <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-8 backdrop-blur-2xl">
             <img
-              src="/images/cars/porsche.jpg"
-              alt="car"
+              src={image}
+              alt={vehicleName}
               className="h-60 w-full rounded-[2rem] object-cover"
             />
 
             <div className="mt-6">
               <h2 className="text-3xl font-black">
-                Porsche 911 Carrera
+                {vehicleName}
               </h2>
 
               <p className="mt-2 text-white/45">
-                Véhicule sportif premium.
+                Véhicule sélectionné pour votre réservation.
               </p>
             </div>
 
@@ -112,13 +144,13 @@ function Payment() {
               <Info
                 icon={<CalendarDays size={18} />}
                 label="Date début"
-                value="12 Juin 2026"
+                value={dateDebut}
               />
 
               <Info
                 icon={<CalendarDays size={18} />}
                 label="Date fin"
-                value="16 Juin 2026"
+                value={dateFin}
               />
 
               <Info
@@ -135,7 +167,7 @@ function Payment() {
                 </span>
 
                 <span className="text-4xl font-black text-[#22C55E]">
-                  7 200 DH
+                  {total} DH
                 </span>
               </div>
             </div>
