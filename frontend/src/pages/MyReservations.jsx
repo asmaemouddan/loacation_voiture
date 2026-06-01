@@ -183,8 +183,9 @@ function MyReservations() {
                       <Badge status={reservation.status} />
                       <PaymentBadge status={reservation.payment} />
 
-                      <Link
-                        to={reservation.payment === "Non payé" ? "/payment" : "#"}
+                     <Link
+                          to={reservation.payment === "Non payé" ? "/payment" : "#"}
+                          state={{ reservation }}
                         className="mt-2 flex items-center justify-center gap-2 rounded-2xl bg-[#081C15] px-5 py-4 font-black text-white transition hover:bg-[#0f2d23] dark:bg-[#22C55E] dark:text-[#081C15] dark:hover:bg-[#D8F3DC]"
                       >
                         {reservation.payment === "Non payé" ? (
