@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   Car,
   CalendarCheck,
@@ -6,37 +7,103 @@ import {
 } from "lucide-react";
 
 import AgencyLayout from "../../components/agency/AgencyLayout";
+import { getVehicles } from "../../services/vehicleService";
+import {
+  acceptReservation,
+  getReservations,
+  refuseReservation,
+} from "../../services/reservationService";
 
 function AgencyDashboard() {
-  const reservations = [
-    {
-      id: 1,
-      client: "Laila Amrani",
-      vehicle: "BMW M4 Competition",
-      date: "12 Juin 2026",
-      status: "En attente",
-    },
+  const [vehiclesCount, setVehiclesCount] = useState(0);
+  const [reservations, setReservations] = useState([]);
+  const [reservationsCount, setReservationsCount] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-    {
-      id: 2,
-      client: "Sara Bennani",
-      vehicle: "Porsche 911 Carrera",
-      date: "15 Juin 2026",
-      status: "Confirmée",
-    },
+  const loadDashboard = async () => {
+    try {
+      setLoading(true);
 
-    {
-      id: 3,
-      client: "Yassine Alami",
-      vehicle: "Range Rover Sport",
-      date: "18 Juin 2026",
-      status: "En attente",
-    },
-  ];
+      const vehiclesData = await getVehicles();
+      const reservationsData = await getReservations();
+
+      const vehicles = Array.isArray(vehiclesData)
+        ? vehiclesData
+        : vehiclesData.data || [];
+
+      const reservationItems = Array.isArray(reservationsData)
+        ? reservationsData
+        : reservationsData.data || [];
+
+      const recentReservations = reservationItems.slice(0, 5).map((reservation) => {
+        const vehicle = reservation.vehicule || reservation.vehicle || {};
+        const vehicleFromList =
+          vehicles.find(
+            (car) =>
+              String(car.id) ===
+              String(reservation.vehicule_id || reservation.vehicle_id)
+          ) || {};
+
+        const selectedVehicle = Object.keys(vehicle).length
+          ? vehicle
+          : vehicleFromList;
+
+        return {
+          id: reservation.id,
+          client:
+            reservation.client ||
+            reservation.user?.name ||
+            reservation.user_name ||
+            `Client #${reservation.user_id || 1}`,
+          vehicle:
+            reservation.vehicle_name ||
+            `${selectedVehicle.marque || ""} ${selectedVehicle.modele || ""}`.trim() ||
+            `Véhicule #${reservation.vehicule_id || reservation.vehicle_id || ""}`,
+          date:
+            reservation.date_debut ||
+            reservation.dateDebut ||
+            reservation.created_at?.slice(0, 10) ||
+            "—",
+          status: formatStatus(reservation.status || "en_attente"),
+        };
+      });
+
+      setVehiclesCount(vehicles.length);
+      setReservationsCount(reservationItems.length);
+      setReservations(recentReservations);
+    } catch (error) {
+      console.error("Erreur chargement dashboard agence:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadDashboard();
+  }, []);
+
+  const handleAccept = async (id) => {
+    try {
+      await acceptReservation(id);
+      await loadDashboard();
+    } catch (error) {
+      console.error("Erreur acceptation réservation:", error);
+      alert("Impossible d'accepter la réservation.");
+    }
+  };
+
+  const handleRefuse = async (id) => {
+    try {
+      await refuseReservation(id);
+      await loadDashboard();
+    } catch (error) {
+      console.error("Erreur refus réservation:", error);
+      alert("Impossible de refuser la réservation.");
+    }
+  };
 
   return (
     <AgencyLayout>
-      {/* HEADER */}
       <div className="mt-8 flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
         <div>
           <p className="text-sm uppercase tracking-[0.25em] text-[#22C55E]">
@@ -53,26 +120,24 @@ function AgencyDashboard() {
         </div>
 
         <div className="rounded-2xl border border-[#22C55E]/20 bg-[#22C55E]/10 px-6 py-4 text-sm font-black text-[#22C55E]">
-          Rentivo Fès Centre
+          Rentivo Agence
         </div>
       </div>
 
-      {/* STATS */}
       <div className="mt-10 grid gap-5 md:grid-cols-2">
         <Card
           icon={<Car />}
           title="Véhicules agence"
-          value="18"
+          value={vehiclesCount}
         />
 
         <Card
           icon={<CalendarCheck />}
           title="Réservations agence"
-          value="42"
+          value={reservationsCount}
         />
       </div>
 
-      {/* RESERVATIONS */}
       <div className="mt-10 rounded-[2.5rem] border border-white/10 bg-white/[0.04] p-8 backdrop-blur-2xl">
         <div className="flex items-center justify-between">
           <div>
@@ -86,52 +151,74 @@ function AgencyDashboard() {
           </div>
         </div>
 
-        <div className="mt-10 space-y-5">
-          {reservations.map((reservation) => (
-            <div
-              key={reservation.id}
-              className="rounded-[2rem] border border-white/10 bg-black/20 p-6"
-            >
-              <div className="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
-                <div>
-                  <p className="text-sm text-white/35">
-                    Réservation #{reservation.id}
-                  </p>
+        {loading && (
+          <div className="mt-10 rounded-2xl bg-black/20 p-8 text-center text-sm font-bold text-[#22C55E]">
+            Chargement des réservations...
+          </div>
+        )}
 
-                  <h3 className="mt-2 text-2xl font-black">
-                    {reservation.client}
-                  </h3>
+        {!loading && reservations.length === 0 && (
+          <div className="mt-10 rounded-2xl bg-black/20 p-8 text-center text-sm font-bold text-[#22C55E]">
+            Aucune réservation trouvée.
+          </div>
+        )}
 
-                  <div className="mt-3 flex flex-wrap gap-3 text-sm text-white/45">
-                    <span>{reservation.vehicle}</span>
-                    <span>•</span>
-                    <span>{reservation.date}</span>
+        {!loading && reservations.length > 0 && (
+          <div className="mt-10 space-y-5">
+            {reservations.map((reservation) => (
+              <div
+                key={reservation.id}
+                className="rounded-[2rem] border border-white/10 bg-black/20 p-6"
+              >
+                <div className="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
+                  <div>
+                    <p className="text-sm text-white/35">
+                      Réservation #{reservation.id}
+                    </p>
+
+                    <h3 className="mt-2 text-2xl font-black">
+                      {reservation.client}
+                    </h3>
+
+                    <div className="mt-3 flex flex-wrap gap-3 text-sm text-white/45">
+                      <span>{reservation.vehicle}</span>
+                      <span>•</span>
+                      <span>{reservation.date}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={`rounded-xl px-5 py-3 text-xs font-black ${
+                        reservation.status === "Confirmée"
+                          ? "bg-[#22C55E]/10 text-[#22C55E]"
+                          : reservation.status === "Refusée"
+                          ? "bg-red-500/10 text-red-400"
+                          : "bg-yellow-400/10 text-yellow-300"
+                      }`}
+                    >
+                      {reservation.status}
+                    </span>
+
+                    <button
+                      onClick={() => handleAccept(reservation.id)}
+                      className="rounded-2xl border border-[#22C55E]/20 bg-[#22C55E]/10 p-4 text-[#22C55E] transition hover:bg-[#22C55E] hover:text-[#081C15]"
+                    >
+                      <CheckCircle2 size={20} />
+                    </button>
+
+                    <button
+                      onClick={() => handleRefuse(reservation.id)}
+                      className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-red-400 transition hover:bg-red-500 hover:text-white"
+                    >
+                      <XCircle size={20} />
+                    </button>
                   </div>
                 </div>
-
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`rounded-xl px-5 py-3 text-xs font-black ${
-                      reservation.status === "Confirmée"
-                        ? "bg-[#22C55E]/10 text-[#22C55E]"
-                        : "bg-yellow-400/10 text-yellow-300"
-                    }`}
-                  >
-                    {reservation.status}
-                  </span>
-
-                  <button className="rounded-2xl border border-[#22C55E]/20 bg-[#22C55E]/10 p-4 text-[#22C55E] transition hover:bg-[#22C55E] hover:text-[#081C15]">
-                    <CheckCircle2 size={20} />
-                  </button>
-
-                  <button className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-red-400 transition hover:bg-red-500 hover:text-white">
-                    <XCircle size={20} />
-                  </button>
-                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </AgencyLayout>
   );
@@ -155,6 +242,22 @@ function Card({ icon, title, value }) {
       </p>
     </div>
   );
+}
+
+function formatStatus(status) {
+  if (status === "acceptee") {
+    return "Confirmée";
+  }
+
+  if (status === "refusee") {
+    return "Refusée";
+  }
+
+  if (status === "annulee") {
+    return "Annulée";
+  }
+
+  return "En attente";
 }
 
 export default AgencyDashboard;
