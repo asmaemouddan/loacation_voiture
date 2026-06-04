@@ -36,6 +36,7 @@ function ProfileScanOCR() {
 
       setOcrResult(result);
       localStorage.setItem("ocr_result", JSON.stringify(result));
+      window.dispatchEvent(new Event("storage"));
     } catch (err) {
       console.error("Erreur OCR:", err.response?.data || err);
       setError("Impossible de scanner le document. Vérifiez l'image.");
@@ -76,8 +77,8 @@ function ProfileScanOCR() {
         </h3>
 
         <p className="mt-3 max-w-md text-sm leading-7 text-[#081C15]/45 dark:text-white/45">
-          Glissez votre CIN ou permis de conduire ici
-          pour extraire automatiquement les informations.
+          Glissez votre CIN ou permis de conduire ici pour extraire automatiquement
+          les informations.
         </p>
 
         <div className="mt-6 flex items-center gap-3 rounded-full bg-[#081C15] px-6 py-3 text-sm font-black text-white dark:bg-[#22C55E] dark:text-[#081C15]">
