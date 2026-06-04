@@ -24,12 +24,15 @@ function UsersManagement() {
 
         const formattedUsers = items.map((user) => {
           const fullName = user.name || "";
-          const parts = fullName.split(" ");
+          const parts = fullName.trim().split(" ");
+
+          const prenom = user.prenom || parts[0] || fullName || "Client";
+          const nom = user.nom || parts.slice(1).join(" ") || "";
 
           return {
             id: user.id,
-            nom: user.nom || parts.slice(1).join(" ") || "",
-            prenom: user.prenom || parts[0] || fullName || "Client",
+            nom,
+            prenom,
             email: user.email || "",
             telephone: user.telephone || user.phone || "Non défini",
             type:
@@ -38,7 +41,8 @@ function UsersManagement() {
                 : user.role === "client"
                 ? "Client"
                 : user.role || "Client",
-            image: user.image || "/images/admin/admin.jpg",
+            image: user.image || null,
+            initial: (prenom || fullName || "U").charAt(0).toUpperCase(),
           };
         });
 
@@ -121,11 +125,17 @@ function UsersManagement() {
                   <tr key={user.id} className="bg-black/20">
                     <td className="rounded-l-2xl px-5 py-5">
                       <div className="flex items-center gap-4">
-                        <img
-                          src={user.image}
-                          alt={user.nom}
-                          className="h-16 w-16 rounded-2xl object-cover"
-                        />
+                        {user.image ? (
+                          <img
+                            src={user.image}
+                            alt={`${user.prenom} ${user.nom}`}
+                            className="h-16 w-16 rounded-2xl object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#22C55E]/10 text-2xl font-black text-[#22C55E]">
+                            {user.initial}
+                          </div>
+                        )}
 
                         <div>
                           <p className="text-sm uppercase tracking-[0.18em] text-[#22C55E]">
