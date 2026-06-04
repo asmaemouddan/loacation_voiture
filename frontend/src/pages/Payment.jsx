@@ -1,9 +1,11 @@
+import { useState } from "react";
 import {
   CreditCard,
   CalendarDays,
   ShieldCheck,
   Wallet,
   CheckCircle2,
+  AlertCircle,
 } from "lucide-react";
 
 import { motion } from "framer-motion";
@@ -14,6 +16,15 @@ function Payment() {
   const navigate = useNavigate();
 
   const reservation = location.state?.reservation || {};
+
+  const [cardData, setCardData] = useState({
+    holder: "",
+    number: "",
+    expiry: "",
+    cvv: "",
+  });
+
+  const [error, setError] = useState("");
 
   const vehicleName =
     reservation.vehicle ||
@@ -39,7 +50,39 @@ function Payment() {
     reservation.price_total ||
     0;
 
+  const handleChange = (field, value) => {
+    setCardData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
   const handlePayment = () => {
+    setError("");
+
+    const cardNumber = cardData.number.replace(/\s/g, "");
+    const cvv = cardData.cvv.trim();
+
+    if (
+      !cardData.holder.trim() ||
+      !cardData.number.trim() ||
+      !cardData.expiry.trim() ||
+      !cardData.cvv.trim()
+    ) {
+      setError("Veuillez remplir toutes les informations de paiement.");
+      return;
+    }
+
+    if (cardNumber.length < 12 || !/^[0-9]+$/.test(cardNumber)) {
+      setError("Le numéro de carte est invalide.");
+      return;
+    }
+
+    if (cvv.length < 3 || !/^[0-9]+$/.test(cvv)) {
+      setError("Le CVV est invalide.");
+      return;
+    }
+
     alert("Paiement confirmé avec succès.");
     navigate("/my-reservations");
   };
@@ -76,6 +119,13 @@ function Payment() {
                 </div>
               </div>
 
+              {error && (
+                <div className="mb-6 flex items-center gap-3 rounded-2xl border border-red-500/20 bg-red-500/10 px-5 py-4 text-sm font-bold text-red-400">
+                  <AlertCircle size={18} />
+                  {error}
+                </div>
+              )}
+
               <div className="grid gap-5 md:grid-cols-3">
                 <Method title="Visa" active />
                 <Method title="MasterCard" />
@@ -83,13 +133,33 @@ function Payment() {
               </div>
 
               <div className="mt-8 grid gap-5 md:grid-cols-2">
-                <Input label="Nom du titulaire" placeholder="Asmae El Amrani" />
+                <Input
+                  label="Nom du titulaire"
+                  placeholder="Nom complet"
+                  value={cardData.holder}
+                  onChange={(value) => handleChange("holder", value)}
+                />
 
-                <Input label="Numéro de carte" placeholder="**** **** **** 4587" />
+                <Input
+                  label="Numéro de carte"
+                  placeholder="1234 5678 9012 3456"
+                  value={cardData.number}
+                  onChange={(value) => handleChange("number", value)}
+                />
 
-                <Input label="Date expiration" placeholder="08 / 29" />
+                <Input
+                  label="Date expiration"
+                  placeholder="08 / 29"
+                  value={cardData.expiry}
+                  onChange={(value) => handleChange("expiry", value)}
+                />
 
-                <Input label="CVV" placeholder="***" />
+                <Input
+                  label="CVV"
+                  placeholder="123"
+                  value={cardData.cvv}
+                  onChange={(value) => handleChange("cvv", value)}
+                />
               </div>
 
               <motion.button
@@ -181,6 +251,7 @@ function Payment() {
 function Method({ title, active }) {
   return (
     <button
+      type="button"
       className={`rounded-2xl border px-5 py-5 text-center font-black transition ${
         active
           ? "border-[#22C55E]/30 bg-[#22C55E]/10 text-[#22C55E]"
@@ -192,7 +263,7 @@ function Method({ title, active }) {
   );
 }
 
-function Input({ label, placeholder }) {
+function Input({ label, placeholder, value, onChange }) {
   return (
     <div>
       <label className="mb-3 block text-sm text-white/45">
@@ -201,6 +272,8 @@ function Input({ label, placeholder }) {
 
       <input
         type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className="w-full rounded-2xl border border-white/10 bg-black/20 px-5 py-4 outline-none transition placeholder:text-white/30 focus:border-[#22C55E]/30"
       />
