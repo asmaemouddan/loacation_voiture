@@ -1,16 +1,26 @@
 import { useEffect, useState } from "react";
 import { CreditCard, BadgeCheck, CalendarDays, Save } from "lucide-react";
+import { getCurrentUser } from "../../services/authService";
 
 function OCRVerification() {
   const [ocrData, setOcrData] = useState(null);
+  const [verified, setVerified] = useState(false);
 
   useEffect(() => {
     const loadOcrResult = () => {
       const savedResult = localStorage.getItem("ocr_result");
+      const currentUser = getCurrentUser();
 
       if (savedResult) {
         setOcrData(JSON.parse(savedResult));
       }
+
+      const isVerified =
+        localStorage.getItem("ocr_verified") === "true" &&
+        String(localStorage.getItem("ocr_verified_user_id")) ===
+          String(currentUser?.id);
+
+      setVerified(isVerified);
     };
 
     loadOcrResult();
@@ -23,10 +33,23 @@ function OCRVerification() {
   }, []);
 
   const handleConfirm = () => {
+    const currentUser = getCurrentUser();
+
+    if (!currentUser) {
+      alert("Veuillez vous connecter avant de confirmer les documents.");
+      return;
+    }
+
     if (!ocrData) {
       alert("Veuillez scanner un document avant de confirmer.");
       return;
     }
+
+    localStorage.setItem("ocr_verified", "true");
+    localStorage.setItem("ocr_verified_user_id", currentUser.id);
+    window.dispatchEvent(new Event("storage"));
+
+    setVerified(true);
 
     alert("Informations OCR confirmées avec succès.");
   };
@@ -44,8 +67,18 @@ function OCRVerification() {
           </h2>
         </div>
 
-        <div className="rounded-2xl bg-[#081C15]/10 px-5 py-3 text-sm font-black text-[#081C15] dark:bg-[#22C55E]/10 dark:text-[#22C55E]">
-          {ocrData ? "Document scanné" : "En attente du scan"}
+        <div
+          className={`rounded-2xl px-5 py-3 text-sm font-black ${
+            verified
+              ? "bg-[#22C55E]/10 text-[#22C55E]"
+              : "bg-[#081C15]/10 text-[#081C15] dark:bg-[#22C55E]/10 dark:text-[#22C55E]"
+          }`}
+        >
+          {verified
+            ? "Document confirmé"
+            : ocrData
+            ? "Document scanné"
+            : "En attente du scan"}
         </div>
       </div>
 
@@ -126,7 +159,9 @@ function OCRVerification() {
             className="mt-8 flex w-full items-center justify-center gap-3 rounded-2xl bg-[#081C15] py-4 font-black text-white dark:bg-[#22C55E] dark:text-[#081C15]"
           >
             <Save size={20} />
-            Confirmer les informations OCR
+            {verified
+              ? "Informations OCR déjà confirmées"
+              : "Confirmer les informations OCR"}
           </button>
         </>
       )}

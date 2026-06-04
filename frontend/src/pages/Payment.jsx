@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   CreditCard,
   CalendarDays,
@@ -10,6 +10,7 @@ import {
 
 import { motion } from "framer-motion";
 import { useLocation, useNavigate } from "react-router-dom";
+import { getCurrentUser } from "../services/authService";
 
 function Payment() {
   const location = useLocation();
@@ -50,6 +51,37 @@ function Payment() {
     reservation.price_total ||
     0;
 
+  const isOcrVerifiedForCurrentUser = () => {
+    const currentUser = getCurrentUser();
+
+    return (
+      localStorage.getItem("ocr_verified") === "true" &&
+      String(localStorage.getItem("ocr_verified_user_id")) ===
+        String(currentUser?.id)
+    );
+  };
+
+  useEffect(() => {
+    const currentUser = getCurrentUser();
+
+    if (!currentUser) {
+      alert("Veuillez vous connecter avant le paiement.");
+      navigate("/login");
+      return;
+    }
+
+    if (!isOcrVerifiedForCurrentUser()) {
+      alert("Veuillez scanner et confirmer vos documents avant le paiement.");
+
+      navigate("/profile", {
+        state: {
+          reservation,
+          message: "Veuillez confirmer vos documents OCR avant le paiement.",
+        },
+      });
+    }
+  }, [navigate]);
+
   const handleChange = (field, value) => {
     setCardData((prev) => ({
       ...prev,
@@ -59,6 +91,12 @@ function Payment() {
 
   const handlePayment = () => {
     setError("");
+
+    if (!isOcrVerifiedForCurrentUser()) {
+      alert("Veuillez scanner et confirmer vos documents avant le paiement.");
+      navigate("/profile");
+      return;
+    }
 
     const cardNumber = cardData.number.replace(/\s/g, "");
     const cvv = cardData.cvv.trim();
@@ -117,6 +155,11 @@ function Payment() {
                     Choisissez votre mode de paiement préféré.
                   </p>
                 </div>
+              </div>
+
+              <div className="mb-6 flex items-center gap-3 rounded-2xl border border-[#22C55E]/20 bg-[#22C55E]/10 px-5 py-4 text-sm font-bold text-[#22C55E]">
+                <ShieldCheck size={18} />
+                Documents OCR confirmés. Vous pouvez finaliser le paiement.
               </div>
 
               {error && (
