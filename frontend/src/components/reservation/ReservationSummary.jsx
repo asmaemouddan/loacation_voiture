@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CheckCircle2, CreditCard, Clock, Wallet } from "lucide-react";
 import { createReservation } from "../../services/reservationService";
+import { getCurrentUser } from "../../services/authService";
 
 function ReservationSummary({ selectedVehicle, agence, dateDebut, dateFin }) {
   const navigate = useNavigate();
@@ -39,11 +40,19 @@ function ReservationSummary({ selectedVehicle, agence, dateDebut, dateFin }) {
       return;
     }
 
+    const currentUser = getCurrentUser();
+
+    if (!currentUser) {
+      alert("Veuillez vous connecter avant de réserver.");
+      navigate("/login");
+      return;
+    }
+
     try {
       setSubmitting(true);
 
       await createReservation({
-        user_id: 1,
+        user_id: currentUser.id,
         vehicule_id: selectedVehicle.id,
         date_debut: dateDebut,
         date_fin: dateFin,
@@ -53,7 +62,7 @@ function ReservationSummary({ selectedVehicle, agence, dateDebut, dateFin }) {
 
       navigate("/my-reservations");
     } catch (error) {
-      console.error("Erreur création réservation:", error);
+      console.error("Erreur création réservation:", error.response?.data || error);
       alert("Impossible de créer la réservation.");
     } finally {
       setSubmitting(false);
