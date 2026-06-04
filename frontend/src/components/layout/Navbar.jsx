@@ -1,4 +1,4 @@
-import { Menu, Moon, Sun, Languages } from "lucide-react";
+import { Menu, Moon, Sun, Languages, User } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useContext } from "react";
@@ -9,6 +9,12 @@ import { LanguageContext } from "../../context/LanguageContext";
 function Navbar() {
   const { darkMode, toggleTheme } = useContext(ThemeContext);
   const { language, setLanguage, t } = useContext(LanguageContext);
+
+  const userData = localStorage.getItem("user");
+  const user = userData ? JSON.parse(userData) : null;
+
+  const displayName = user?.name || "Mon profil";
+  const firstName = user?.name ? user.name.split(" ")[0] : "Profil";
 
   const links = [
     { name: t.nav.home, path: "/" },
@@ -85,19 +91,17 @@ function Navbar() {
               to="/profile"
               className="flex items-center gap-3 rounded-full border border-[#2E6B4E]/15 bg-[#2E6B4E]/5 px-3 py-2 transition hover:border-[#2E6B4E]/40 dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-[#3C8A64]/40"
             >
-              <img
-               src="/images/profile/admin.jpg"
-                alt="profile"
-                className="h-10 w-10 rounded-full object-cover"
-              />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#22C55E]/10 text-[#22C55E]">
+                <User size={20} />
+              </div>
 
               <div className="hidden text-left lg:block">
-                <p className="text-xs font-black text-[#081C15] dark:text-white">
-                  Asmae
+                <p className="max-w-[95px] truncate text-xs font-black text-[#081C15] dark:text-white">
+                  {firstName}
                 </p>
 
                 <p className="text-[10px] text-[#081C15]/45 dark:text-white/45">
-                  Mon profil
+                  {displayName === "Mon profil" ? "Mon profil" : user?.role || "client"}
                 </p>
               </div>
             </Link>
