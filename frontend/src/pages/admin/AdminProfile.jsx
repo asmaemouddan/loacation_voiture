@@ -3,13 +3,29 @@ import {
   Mail,
   Phone,
   ShieldCheck,
-  Lock,
   Save,
+  Lock,
 } from "lucide-react";
 
 import AdminLayout from "../../components/admin/AdminLayout";
 
 function AdminProfile() {
+  const userData = localStorage.getItem("user");
+  const user = userData ? JSON.parse(userData) : null;
+
+  const userName = user?.name || "Administrateur";
+  const userEmail = user?.email || "admin@gmail.com";
+  const userRole =
+    user?.role === "admin"
+      ? "Administrateur plateforme"
+      : user?.role || "Administrateur plateforme";
+
+  const initial = userName.charAt(0).toUpperCase();
+
+  const nameParts = userName.split(" ");
+  const firstName = nameParts[0] || "Admin";
+  const lastName = nameParts.slice(1).join(" ") || "";
+
   return (
     <AdminLayout>
       <div className="mt-8">
@@ -25,36 +41,37 @@ function AdminProfile() {
       <div className="mt-10 grid gap-8 xl:grid-cols-[380px_1fr]">
         <div className="rounded-[2.5rem] border border-black/10 bg-black/[0.03] p-8 backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.04]">
           <div className="relative mx-auto w-fit">
-            <img
-              src="/images/admin/admin.jpg"
-              alt="Admin"
-              className="h-44 w-44 rounded-full object-cover ring-4 ring-[#081C15]/10 dark:ring-[#22C55E]/20"
-            />
+            <div className="flex h-44 w-44 items-center justify-center rounded-full bg-[#22C55E]/10 text-6xl font-black text-[#22C55E] ring-4 ring-[#081C15]/10 dark:ring-[#22C55E]/20">
+              {initial}
+            </div>
 
-            <button className="absolute bottom-2 right-2 flex h-14 w-14 items-center justify-center rounded-full bg-[#081C15] text-white shadow-[0_0_30px_rgba(8,28,21,0.25)] dark:bg-[#22C55E] dark:text-[#081C15]">
+            <button
+              type="button"
+              className="absolute bottom-2 right-2 flex h-14 w-14 items-center justify-center rounded-full bg-[#081C15] text-white shadow-[0_0_30px_rgba(8,28,21,0.25)] dark:bg-[#22C55E] dark:text-[#081C15]"
+            >
               <Camera size={22} />
             </button>
           </div>
 
           <div className="mt-8 text-center">
             <h2 className="text-3xl font-black">
-              Admin Rentivo
+              {userName}
             </h2>
 
             <p className="mt-2 text-[#081C15]/45 dark:text-white/45">
-              Administrateur plateforme
+              {userRole}
             </p>
           </div>
 
           <div className="mt-8 space-y-4">
             <Info
               icon={<Mail size={18} />}
-              text="admin@rentivo.com"
+              text={userEmail}
             />
 
             <Info
               icon={<Phone size={18} />}
-              text="+212 6 99 88 77 66"
+              text="Téléphone non défini"
             />
 
             <Info
@@ -76,28 +93,33 @@ function AdminProfile() {
               </h2>
             </div>
 
-            <button className="flex items-center gap-3 rounded-2xl bg-[#081C15] px-6 py-4 font-black text-white shadow-[0_0_25px_rgba(8,28,21,0.25)] transition hover:bg-[#0B3D2E] dark:bg-[#22C55E] dark:text-[#081C15] dark:hover:bg-[#D8F3DC]">
+            <button
+              type="button"
+              className="flex items-center gap-3 rounded-2xl bg-[#081C15] px-6 py-4 font-black text-white shadow-[0_0_25px_rgba(8,28,21,0.25)] transition hover:bg-[#0B3D2E] dark:bg-[#22C55E] dark:text-[#081C15] dark:hover:bg-[#D8F3DC]"
+            >
               <Save size={20} />
               Sauvegarder
             </button>
           </div>
 
           <div className="mt-8 grid gap-5 md:grid-cols-2">
-            <Input label="Nom" value="Admin" />
-            <Input label="Prénom" value="Rentivo" />
-            <Input label="Email" value="admin@rentivo.com" />
-            <Input label="Téléphone" value="+212 6 99 88 77 66" />
+            <Input label="Nom" value={lastName || userName} />
+            <Input label="Prénom" value={firstName} />
+            <Input label="Email" value={userEmail} />
+            <Input label="Téléphone" value="Non défini" />
 
             <Input
               label="Mot de passe"
-              value="12345678"
+              value=""
+              placeholder="Nouveau mot de passe"
               type="password"
               icon={<Lock size={18} />}
             />
 
             <Input
               label="Confirmer mot de passe"
-              value="12345678"
+              value=""
+              placeholder="Confirmer le mot de passe"
               type="password"
               icon={<Lock size={18} />}
             />
@@ -125,6 +147,7 @@ function Input({
   value,
   type = "text",
   icon,
+  placeholder,
 }) {
   return (
     <div>
@@ -142,7 +165,8 @@ function Input({
         <input
           type={type}
           defaultValue={value}
-          className="w-full bg-transparent text-[#081C15] outline-none dark:text-white"
+          placeholder={placeholder}
+          className="w-full bg-transparent text-[#081C15] outline-none placeholder:text-[#081C15]/35 dark:text-white dark:placeholder:text-white/35"
         />
       </div>
     </div>

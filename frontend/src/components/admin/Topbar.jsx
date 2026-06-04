@@ -7,6 +7,17 @@ import {
 import { Link } from "react-router-dom";
 
 function Topbar() {
+  const userData = localStorage.getItem("user");
+  const user = userData ? JSON.parse(userData) : null;
+
+  const userName = user?.name || "Administrateur";
+  const userRole =
+    user?.role === "admin"
+      ? "Administrateur"
+      : user?.role || "Administrateur";
+
+  const initial = userName.charAt(0).toUpperCase();
+
   return (
     <div className="flex items-center justify-between border-b border-black/10 pb-6 dark:border-white/10">
       <div className="hidden items-center gap-3 rounded-2xl border border-black/10 bg-black/[0.03] px-5 py-3 dark:border-white/10 dark:bg-white/[0.04] md:flex">
@@ -42,19 +53,17 @@ function Topbar() {
           to="/admin/profile"
           className="flex items-center gap-3 rounded-2xl border border-transparent p-1 transition hover:border-[#22C55E]/30"
         >
-          <img
-            src="/images/admin/admin.jpg"
-            alt="Admin"
-            className="h-12 w-12 rounded-full object-cover"
-          />
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#22C55E]/10 text-lg font-black text-[#22C55E]">
+            {initial}
+          </div>
 
           <div className="hidden md:block">
             <p className="font-black text-[#081C15] dark:text-white">
-              Admin
+              {userName}
             </p>
 
             <p className="text-sm text-[#081C15]/45 dark:text-white/45">
-              Administrateur
+              {userRole}
             </p>
           </div>
         </Link>
