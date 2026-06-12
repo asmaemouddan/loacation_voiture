@@ -7,7 +7,6 @@ import re
 
 app = FastAPI()
 
-# Permission de faire des requêtes depuis n'importe quelle origine (frontend)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -26,26 +25,15 @@ def home():
         }
     }
 
-# =========================
-# 1. Nettoyage simple
-# =========================
-
 def nettoyer_lignes(text):
-    """
-    نحولو النص لسطور ونحيدو السطور الخاوية
-    """
+ 
     return [ligne.strip() for ligne in text.split("\n") if ligne.strip()]
 
 
 def normaliser_text(text):
-    """
-    نخليو النص uppercase ونسهلو البحث
-    """
     return text.upper().replace("É", "E").replace("È", "E").replace("À", "A")
 
-# =========================
-# 2. Détection type document
-# =========================
+
 
 def detecter_type_document(text):
     text_upper = normaliser_text(text)
@@ -58,10 +46,6 @@ def detecter_type_document(text):
 
     return "inconnu"
 
-
-# =========================
-# 3. Extraction CIN
-# =========================
 
 def extraire_infos_cin(text):
     infos = {
@@ -77,12 +61,10 @@ def extraire_infos_cin(text):
 
     lignes = nettoyer_lignes(text)
 
-    # CIN بحال AE123456
     cin_match = re.search(r"\b[A-Z]{1,2}[0-9]{5,8}\b", text)
     if cin_match:
         infos["cin"] = cin_match.group()
 
-    # التواريخ بحال 15/05/1998
     dates = re.findall(r"\b\d{2}/\d{2}/\d{4}\b", text)
 
     if len(dates) >= 1:
@@ -103,7 +85,6 @@ def extraire_infos_cin(text):
             if i + 1 < len(lignes):
                 infos["nom"] = lignes[i + 1]
 
-    # المدينة
     villes = [
         "RABAT", "CASABLANCA", "FES", "FEZ", "MEKNES",
         "MARRAKECH", "TANGER", "AGADIR", "OUJDA",
@@ -120,9 +101,6 @@ def extraire_infos_cin(text):
 
     return infos
 
-# =========================
-# 4. Extraction Permis
-# =========================
 
 def extraire_infos_permis(text):
     infos = {
@@ -141,10 +119,6 @@ def extraire_infos_permis(text):
     lignes = nettoyer_lignes(text)
     text_upper = normaliser_text(text)
 
-    # Nom et Prénom
-    # Permis format:
-    # 1. ELAMRANI
-    # 2. ASMAE
 
     for ligne in lignes:
         ligne_clean = ligne.strip()
@@ -157,7 +131,6 @@ def extraire_infos_permis(text):
         if match_prenom:
             infos["prenom"] = match_prenom.group(1).strip().upper()
 
-    # Dates
     dates = re.findall(r"\b\d{2}/\d{2}/\d{4}\b", text)
 
     if len(dates) >= 1:
@@ -169,13 +142,11 @@ def extraire_infos_permis(text):
     if len(dates) >= 3:
         infos["date_expiration"] = dates[2]
 
-    # Lieu naissance
-    # Exemple: 3. 15/05/1998 RABAT
+ 
     match_lieu = re.search(r"3\.\s*\d{2}/\d{2}/\d{4}\s+([A-ZÀ-ÿ\s]+)", text, re.IGNORECASE)
     if match_lieu:
         infos["lieu_naissance"] = match_lieu.group(1).strip().upper()
 
-    # Numéro permis
     match_numero_label = re.search(
         r"N[°º]?\s*de\s*permis\s*:\s*([A-Z]{1,3}[0-9]{5,10})",
         text_upper,
@@ -193,7 +164,6 @@ def extraire_infos_permis(text):
             if permis_match:
                 infos["numero_permis"] = permis_match.group()
 
-    # Catégories
     categories_trouvees = []
 
     if re.search(r"\bAM\b", text_upper):
@@ -217,19 +187,15 @@ def extraire_infos_permis(text):
     infos["categories"] = categories_trouvees
 
     return infos
-# =========================
-# 5. Routes FastAPI
-# =========================
+
 
 @app.post("/scan")
 async def scan_document(file: UploadFile = File(...)):
     contents = await file.read()
     image = Image.open(io.BytesIO(contents))
 
-    # OCR: image -> text brut
     text = pytesseract.image_to_string(image, lang="fra")
 
-    # Détection automatique
     type_document = detecter_type_document(text)
 
     if type_document == "cin":
